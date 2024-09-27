@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node all.js"
   },
   "dependencies": {
     "express": "^4.21.0",
