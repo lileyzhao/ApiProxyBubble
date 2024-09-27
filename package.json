@@ -2,8 +2,9 @@
   "name": "api-proxy-bubble",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "start": "node all.js"
+    "start": "node app.js"
   },
   "dependencies": {
     "express": "^4.21.0",

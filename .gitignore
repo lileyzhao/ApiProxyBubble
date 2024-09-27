@@ -31,3 +31,4 @@ vite.config.ts.timestamp*
 
 // other
 package-lock.json
+.env
