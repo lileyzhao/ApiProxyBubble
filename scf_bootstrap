@@ -1,2 +1,2 @@
 #!/bin/bash
-/var/lang/node16/bin/node app.js
+/var/lang/node20/bin/node app.js

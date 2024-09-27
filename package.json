@@ -1,5 +1,5 @@
 {
-  "name": "origin",
+  "name": "api-proxy-bubble",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,5 +9,8 @@
     "express": "^4.21.0",
     "http-proxy-middleware": "^2.0.6",
     "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
