@@ -10,6 +10,12 @@ const proxyWhite = new Map([
   ['/claudeai', 'https://api.anthropic.com'],
   ['/sd', 'https://api.stabilydraw.com'],
   ['/mj/v1', 'https://api.midjdraw.com/v1/xxx'],
+  ['docker', 'registry-1.docker.io'],
+  ['gcr', 'gcr.io'],
+  ['k8s-gcr', 'k8s.gcr.io'],
+  ['k8s', 'registry.k8s.io'],
+  ['ghcr', 'ghcr.io'],
+  ['quay', 'quay.io']
 ])
 
 // ! 环境变量配置: PORT, RATE, PROXIES
