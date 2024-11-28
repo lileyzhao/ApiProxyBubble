@@ -57,8 +57,9 @@ app.get('/', (req, res) => {
   res.send(
     `<!DOCTYPE html><html><head><title>API代理服务器</title></head><body>` +
       `<h1>API代理服务器</h1>` +
-      `<p>运行在端口 ${port} 上运行</p>` +
+      `<p>🚀 运行在端口 ${port} 上</p>` +
       `<p>每分钟限速: ${rateLimit > 0 ? rateLimit : '不限速'}</p>` +
+      `<p>-----------------------------</p>` +
       `<p>代理列表: </p><ul>` +
       proxiesHtml +
       `</ul></body></html>`
