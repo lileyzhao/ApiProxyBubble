@@ -10,12 +10,12 @@ const proxyWhite = new Map([
   ['/claudeai', 'https://api.anthropic.com'],
   ['/sd', 'https://api.stabilydraw.com'],
   ['/mj/v1', 'https://api.midjdraw.com/v1/xxx'],
-  ['docker', 'registry-1.docker.io'],
-  ['gcr', 'gcr.io'],
-  ['k8s-gcr', 'k8s.gcr.io'],
-  ['k8s', 'registry.k8s.io'],
-  ['ghcr', 'ghcr.io'],
-  ['quay', 'quay.io']
+  ['/docker', 'https://registry-1.docker.io'],
+  ['/gcr', 'https://gcr.io'],
+  ['/k8s-gcr', 'https://k8s.gcr.io'],
+  ['/k8s', 'https://registry.k8s.io'],
+  ['/ghcr', 'https://ghcr.io'],
+  ['/quay', 'https://quay.io']
 ])
 
 // ! 环境变量配置: PORT, RATE, PROXIES
@@ -84,9 +84,10 @@ app.use((err, req, res, next) => {
 
 // 启动服务器
 app.listen(port, () => {
-  console.log(`API Proxy Server is running on port ${port}`)
-  console.log(`限速(每分钟):${rateLimit > 0 ? rateLimit : '不限速'}`)
-  console.log(`Proxies:${proxies}`)
+  console.log(`API代理服务器`)
+  console.log(`- 运行在端口: ${port}`)
+  console.log(`- 每分钟限速: ${rateLimit > 0 ? rateLimit : '不限速'}`)
+  console.log(`- 代理的列表:`)
   // 如果有代理配置，打印配置信息
   if (proxies.length > 0) {
     proxies.forEach((key, index) => {
