@@ -2,52 +2,29 @@
 import express from 'express'
 import cors from 'cors'
 import { createProxyMiddleware } from 'http-proxy-middleware'
-import rateLimit from 'express-rate-limit'
-import proxies from './proxies.js'
+import expressRateLimit from 'express-rate-limit'
 
+// ! API代理白名单，在此处可修改任意允许的API，默认情况下仅会代理白名单内的API
+const proxyWhite = new Map([
+  ['/openai', 'https://api.openai.com'],
+  ['/claudeai', 'https://api.anthropic.com'],
+  ['/sd', 'https://api.stabilydraw.com'],
+  ['/mj/v1', 'https://api.midjdraw.com/v1/xxx'],
+])
+
+// ! 环境变量配置: PORT, RATE, PROXIES
+const port = process.env.PORT || 9725 // ! 服务端口，未设置环境变量时默认为 9725
+const rateLimit = process.env.RATE || 0 // ! 每分钟访问限速，0 为不限速，未设置环境变量时默认为 0
+//const proxies = Array.from((process.env.PROXIES || Array.from(proxyWhite.keys()).join(',')).split(',').filter(Boolean)) // ! 代理配置，未设置环境变量时默认为白名单
+const proxies = ['api.openai.com']
 // 创建 Express 应用实例
 const app = express()
-// 设置服务器端口，优先使用环境变量中的 PORT，如果没有则使用 9725
-const port = process.env.PORT || 9725
 
-// 如果设置了环境变量，创建限速器
-if (RATE) {
-  const limiter = rateLimit({
-    windowMs: 60 * 1000, // 1分钟
-    max: RATE,
-    standardHeaders: true,
-    legacyHeaders: false,
-  })
-
-  // 应用限速器到所有路由
-  app.use(limiter)
-}
+// 如果设置了每分钟限速，则创建限速器
+rateLimit > 0 && app.use(expressRateLimit({ windowMs: 60 * 1000, max: rateLimit, standardHeaders: true, legacyHeaders: false }))
 
 // 使用 CORS 中间件，允许跨域请求
 app.use(cors())
-
-// 获取代理配置的函数
-const getProxyConfigs = () => {
-  // 从环境变量中获取 ENTRY，默认为 'all'，并转换为小写
-  const entry = (process.env.ENTRY || 'all').toLowerCase()
-
-  // 如果 ENTRY 是 'ai' 或 'draw'，直接返回对应的预定义代理配置
-  if (entry === 'ai' || entry === 'draw') {
-    return proxies[entry]
-  }
-
-  // 否则，解析 PROXIES 环境变量来获取代理配置
-  return (process.env.PROXIES || '')
-    .split(',')
-    .filter(Boolean)
-    .map((config) => {
-      const [path, target] = config.split(':')
-      return { path, target }
-    })
-}
-
-// 获取代理配置
-const proxyConfigs = getProxyConfigs()
 
 // 创建代理中间件的函数
 const createProxy = (target) =>
@@ -59,29 +36,40 @@ const createProxy = (target) =>
   })
 
 // 为每个代理配置创建并应用代理中间件
-proxyConfigs.forEach(({ path, target }) => {
-  if (path && target) {
-    // 确保路径以 '/' 开头
-    path = path.startsWith('/') ? path : `/${path}`
-    // 确保目标 URL 包含协议
-    target = target.startsWith('http://') || target.startsWith('https://') ? target : `https://${target}`
-    // 将代理中间件应用到指定路径
+proxies.forEach((key) => {
+  if (key) {
+    const path = key.startsWith('/') ? key : `/${key}`
+    const target = proxyWhite.has(key) ? proxyWhite.get(key) : key.startsWith('http') ? key : `https://${key}`
     app.use(path, createProxy(target))
   }
 })
 
 // 根路由处理
 app.get('/', (req, res) => {
-  res.send('API Proxy Server is running')
+  const proxiesHtml = proxies.reduce((acc, key) => {
+    if (key) {
+      const path = key.startsWith('/') ? key : `/${key}`
+      const target = proxyWhite.has(key) ? proxyWhite.get(key) : key.startsWith('http') ? key : `https://${key}`
+      acc += `<li>${path} ==> ${target}</li>`
+    }
+    return acc
+  }, '')
+  res.send(
+    `<!DOCTYPE html><html><head><title>API代理服务器</title></head><body>` +
+      `<h1>API代理服务器</h1>` +
+      `<p>运行在端口 ${port} 上运行</p>` +
+      `<p>每分钟限速: ${rateLimit > 0 ? rateLimit : '不限速'}</p>` +
+      `<p>代理列表: </p><ul>` +
+      proxiesHtml +
+      `</ul></body></html>`
+  )
 })
 
 // 全局错误处理中间件
 app.use((err, req, res, next) => {
   console.error('Error occurred:', err)
-
   const statusCode = err.statusCode || 500
   const errorMessage = err.message || 'Internal Server Error'
-
   res.status(statusCode).json({
     error: errorMessage,
     ...(process.env.NODE_ENV !== 'production' && { stack: err.stack }),
@@ -91,11 +79,17 @@ app.use((err, req, res, next) => {
 // 启动服务器
 app.listen(port, () => {
   console.log(`API Proxy Server is running on port ${port}`)
+  console.log(`限速(每分钟):${rateLimit > 0 ? rateLimit : '不限速'}`)
+  console.log(`Proxies:${proxies}`)
   // 如果有代理配置，打印配置信息
-  if (proxyConfigs.length > 0) {
-    proxyConfigs.forEach(({ path, target }, index) => {
-      console.log(`  ${index + 1}. Path: ${path}`)
-      console.log(`     Target: ${target}`)
+  if (proxies.length > 0) {
+    proxies.forEach((key, index) => {
+      if (key) {
+        const path = key.startsWith('/') ? key : `/${key}`
+        const target = proxyWhite.has(key) ? proxyWhite.get(key) : key.startsWith('http') ? key : `https://${key}`
+        console.log(`  ${index + 1}. Path  :  ${path}`)
+        console.log(`     Target:  ${target}`)
+      }
     })
   } else {
     console.log('No proxy configurations set')
