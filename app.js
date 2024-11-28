@@ -21,8 +21,7 @@ const proxyWhite = new Map([
 // ! 环境变量配置: PORT, RATE, PROXIES
 const port = process.env.PORT || 9725 // ! 服务端口，未设置环境变量时默认为 9725
 const rateLimit = process.env.RATE || 0 // ! 每分钟访问限速，0 为不限速，未设置环境变量时默认为 0
-//const proxies = Array.from((process.env.PROXIES || Array.from(proxyWhite.keys()).join(',')).split(',').filter(Boolean)) // ! 代理配置，未设置环境变量时默认为白名单
-const proxies = ['api.openai.com']
+const proxies = Array.from((process.env.PROXIES || Array.from(proxyWhite.keys()).join(',')).split(',').filter(Boolean)) // ! 代理配置，未设置环境变量时默认为白名单
 // 创建 Express 应用实例
 const app = express()
 
